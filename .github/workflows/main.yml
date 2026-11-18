@@ -21,18 +21,34 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          # Overrides the default "tools platform-tools", since the legacy
-          # "tools" package no longer exists and caused the failure.
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Find Android project folder
+        run: |
+          SETTINGS=$(find . -maxdepth 3 \( -name 'settings.gradle' -o -name 'settings.gradle.kts' \) -not -path './.git/*' | head -n 1)
+          if [ -z "$SETTINGS" ]; then
+            echo "No settings.gradle found - is the Android project in this repo?"
+            exit 1
+          fi
+          echo "PROJECT_DIR=$(dirname "$SETTINGS")" >> "$GITHUB_ENV"
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug --stacktrace
+          else
+            gradle assembleDebug --stacktrace
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: '**/build/outputs/apk/debug/*.apk'
