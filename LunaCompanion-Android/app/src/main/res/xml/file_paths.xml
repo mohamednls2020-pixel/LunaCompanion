@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="luna_cache" path="." />
+    <external-path name="luna_shared" path="Luna/" />
+    <external-files-path name="luna_models" path="models/" />
+</paths>
